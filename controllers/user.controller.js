@@ -1,31 +1,54 @@
 const { response, request } = require("express");
+const bcryptjs = require("bcryptjs");
 
-const getUser = (req = request, res = response) => {
+const UserModel = require("../models/user");
 
-  const params = req.query;
+const getUser = async (req = request, res = response) => {
+  const { limit = 5, from = 0 } = req.query;
+  const query = { status: true };
+
+  const [count, users] = await Promise.all([
+    UserModel.countDocuments(),
+    UserModel.find(query).skip(Number(from)).limit(Number(limit)),
+  ]);
+
   res.status(200).json({
-    msg: "put API - controller",
-    params
+    count,
+    users,
   });
 };
 
-const postUser = (req, res = response) => {
+const postUser = async (req, res = response) => {
+  const { name, email, password, role } = req.body;
 
-  const { nombre, edad } = req.body;
+  const user = new UserModel({ name, email, password, role });
+  console.log(user);
+  // Encrypt password
+  const salt = bcryptjs.genSaltSync(10); // Default value.
+  user.password = bcryptjs.hashSync(user.password, salt);
+
+  await user.save();
 
   res.status(200).json({
-    msg: "post API - controller",
-    nombre,
-    edad
+    user,
   });
 };
 
-const putUser = (req, res = response) => {
-
+const putUser = async (req, res = response) => {
   const id = req.params.id;
+
+  const { _id, password, google, email, ...userData } = req.body;
+
+  if (password) {
+    // Encrypt password
+    const salt = bcryptjs.genSaltSync(10); // Default value.
+    userData.password = bcryptjs.hashSync(password, salt);
+  }
+
+  const user = await UserModel.findByIdAndUpdate(id, userData);
+
   res.status(200).json({
-    msg: "put API - controller",
-    id
+    user,
   });
 };
 
@@ -35,9 +58,16 @@ const patchUser = (req, res = response) => {
   });
 };
 
-const deleteUser = (req, res = response) => {
+const deleteUser = async(req, res = response) => {
+  const id = req.params.id;
+
+  // Delete in DB.
+  // const user = await UserModel.findByIdAndDelete(id);
+
+  const user = await UserModel.findByIdAndUpdate( id, { status : false})
+
   res.status(200).json({
-    msg: "delete API - controller",
+    user
   });
 };
 
@@ -46,5 +76,5 @@ module.exports = {
   postUser,
   putUser,
   patchUser,
-  deleteUser
+  deleteUser,
 };
