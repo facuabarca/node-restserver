@@ -22,7 +22,7 @@ const postUser = async (req, res = response) => {
   const { name, email, password, role } = req.body;
 
   const user = new UserModel({ name, email, password, role });
-  console.log(user);
+  // console.log(user);
   // Encrypt password
   const salt = bcryptjs.genSaltSync(10); // Default value.
   user.password = bcryptjs.hashSync(user.password, salt);
@@ -60,12 +60,7 @@ const patchUser = (req, res = response) => {
 
 const deleteUser = async(req, res = response) => {
   const id = req.params.id;
-
-  // Delete in DB.
-  // const user = await UserModel.findByIdAndDelete(id);
-
-  const user = await UserModel.findByIdAndUpdate( id, { status : false})
-
+  const user = await UserModel.findByIdAndUpdate( id, { status : false }); 
   res.status(200).json({
     user
   });
